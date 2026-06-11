@@ -1,4 +1,4 @@
-# DeCal
+# DeCal: Decoupled Tail Budget Control for Non-Stationary LLM Serving
 
 DeCal is a drift-aware budget control framework for LLM serving workloads. It learns per-client, per-window tail budgets from historical request distributions, detects workload drift online, and adapts capacity with decoupled empirical calibration.
 
