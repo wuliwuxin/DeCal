@@ -1,0 +1,10 @@
+name: decal
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - numpy=1.26.4
+  - pip:
+      - setproctitle==1.3.3
