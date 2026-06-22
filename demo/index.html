@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeCal · Causal Replay</title>
+  <style>
+    :root {
+      --ink:#202428; --muted:#626a70; --dim:#8a9095; --bg:#f7f7f5;
+      --line:#d9dcde; --cyan:#347f89; --red:#c9344d;
+      --green:#267252; --amber:#a66b18;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; color:var(--ink); background:var(--bg);
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    button,select,input { font:inherit; }
+    .shell { width:min(1180px,94vw); margin:auto; padding:30px 0 44px; }
+    h1 { margin:0 0 8px; font-size:clamp(25px,3vw,36px); line-height:1.18; letter-spacing:-.025em; font-weight:680; }
+    .intro { color:var(--muted); line-height:1.55; max-width:850px; margin:0 0 22px; font-size:14px; }
+    .panel { border:1px solid var(--line); background:#fff; border-radius:6px; overflow:hidden; }
+    .controls { display:grid; grid-template-columns:1.15fr 1fr 1fr auto; gap:22px; align-items:end; padding:14px 18px; border-bottom:1px solid var(--line); background:#fafafa; }
+    .control label { display:block; color:var(--muted); font-size:10px; font-weight:650; letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px; }
+    select { width:100%; color:var(--ink); background:#fff; border:1px solid #cfd3d5; padding:7px 9px; border-radius:3px; }
+    input[type="range"] { width:100%; accent-color:var(--amber); }
+    .range-line { display:flex; gap:9px; align-items:center; }
+    .range-read { min-width:38px; text-align:right; font:600 11px ui-monospace,monospace; }
+    .buttons { display:flex; gap:7px; }
+    button { border:1px solid #cfd3d5; border-radius:3px; cursor:pointer; padding:7px 11px; color:var(--ink); background:#fff; font-weight:600; font-size:12px; white-space:nowrap; }
+    button:hover { background:#f1f2f2; }
+    button.primary { color:#fff; background:#343a3e; border-color:#343a3e; }
+    .outcomes { display:grid; grid-template-columns:1fr 1.25fr; gap:0; margin:0; border-bottom:1px solid var(--line); }
+    .outcome { border-right:1px solid var(--line); background:#fff; padding:12px 18px; }
+    .outcome-name { font-size:11px; font-weight:650; letter-spacing:.02em; }
+    .outcome-metrics { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:11px; }
+    .outcome-metrics span { display:block; color:var(--muted); font-size:9px; text-transform:uppercase; letter-spacing:.05em; }
+    .outcome-metrics strong { display:block; margin-top:3px; font:700 21px ui-monospace,monospace; }
+    .summary { padding:12px 18px; display:flex; flex-direction:column; justify-content:center; background:#fafafa; }
+    .summary strong { color:var(--ink); font-size:12px; font-weight:650; }
+    .summary span { color:var(--muted); font-size:10px; line-height:1.5; margin-top:4px; }
+    .phases { display:grid; grid-template-columns:repeat(5,1fr); gap:0; margin:0; border-bottom:1px solid var(--line); }
+    .phase { border-right:1px solid var(--line); border-bottom:3px solid transparent; padding:8px 9px 7px; color:var(--dim); background:#fff; font-size:9px; text-align:left; transition:background .15s ease; }
+    .phase:last-child { border-right:0; }
+    .phase strong { display:block; color:inherit; font-size:10px; margin-bottom:2px; }
+    .phase.active { color:var(--ink); background:#f7f7f5; border-bottom-color:var(--red); }
+    .replay-body { display:grid; grid-template-columns:minmax(0,2fr) minmax(300px,.8fr); border-top:1px solid var(--line); }
+    .chart-side { padding:18px; border-right:1px solid var(--line); }
+    .chart-head { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; }
+    .chart-title { font-weight:680; }
+    .legend { display:flex; gap:11px; flex-wrap:wrap; color:var(--muted); font-size:10px; }
+    .legend span { display:flex; gap:5px; align-items:center; }
+    .dot { width:8px; height:3px; border-radius:4px; }
+    .area-key { width:10px; height:8px; border:1px solid rgba(212,63,87,.3); background:rgba(212,63,87,.12); }
+    #timeline { width:100%; height:350px; display:block; }
+    #scrubber { margin-top:10px; width:100%; accent-color:var(--red); }
+    .event { min-height:40px; margin-top:12px; color:var(--muted); font-size:12px; }
+    .inspect { padding:18px; display:grid; align-content:start; gap:11px; }
+    .window-badge { color:var(--muted); font:650 10px ui-monospace,monospace; }
+    .inspect-title { font-size:17px; font-weight:680; }
+    .explanation { border-left:2px solid var(--red); padding:4px 0 4px 10px; color:var(--muted); font-size:10px; line-height:1.5; }
+    .triple { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+    .metric { background:#fafafa; border:1px solid var(--line); padding:9px; border-radius:3px; }
+    .metric span { display:block; color:var(--muted); font-size:9px; }
+    .metric strong { display:block; margin-top:5px; font:800 17px ui-monospace,monospace; }
+    .verdict { display:grid; grid-template-columns:78px 92px 1fr auto; gap:10px; align-items:center; padding:10px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#fff; font-size:11px; }
+    .verdict-budget { font:800 15px ui-monospace,monospace; }
+    .verdict-gap { color:var(--muted); font-size:9px; line-height:1.35; }
+    .badge { padding:3px 6px; border:1px solid currentColor; border-radius:2px; font-size:8px; font-weight:700; letter-spacing:.05em; }
+    .badge.covered { color:#267252; background:#fff; }
+    .badge.miss { color:#a6273d; background:#fff; }
+    .calibration { background:#fafafa; border:1px solid var(--line); border-radius:3px; padding:12px; }
+    .calibration-title { font-size:11px; color:var(--muted); margin-bottom:13px; }
+    .score-row { display:grid; grid-template-columns:90px 1fr 55px; gap:8px; align-items:center; font-size:10px; margin:10px 0; }
+    .score-track { height:9px; border-radius:8px; background:#dfe9eb; overflow:hidden; }
+    .score-fill { height:100%; border-radius:inherit; transition:width .25s; }
+    .score-num { text-align:right; font:750 11px ui-monospace,monospace; }
+    .cumulative { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .cum { padding:10px; border:1px solid var(--line); border-radius:3px; }
+    .cum span { color:var(--muted); font-size:9px; display:block; }
+    .cum strong { font-size:22px; display:block; margin-top:4px; }
+    .loading { opacity:.55; pointer-events:none; }
+    .error { color:var(--red)!important; }
+    @media (max-width:1000px) {
+      .replay-body { grid-template-columns:1fr; }
+      .chart-side { border-right:0; border-bottom:1px solid var(--line); }
+      .outcomes { grid-template-columns:1fr 1.4fr; }
+    }
+    @media (max-width:680px) {
+      .controls,.outcomes { grid-template-columns:1fr; }
+      .phases { grid-template-columns:1fr 1fr; }
+      .triple { grid-template-columns:1fr; }
+      .verdict { grid-template-columns:1fr 1fr; }
+      #timeline { height:320px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <h1>Causal replay under workload drift</h1>
+    <p class="intro">The budget for window <em>t</em> uses observations through <em>t − 1</em>; P99 is observed after commitment.</p>
+    <section class="panel" id="replayPanel">
+      <div class="controls">
+        <div class="control"><label for="scenario">Workload scenario</label><select id="scenario"><option value="sudden">Sudden shift</option><option value="gradual">Gradual drift</option><option value="recovery">Shift and recovery</option></select></div>
+        <div class="control"><label for="magnitude">Drift magnitude</label><div class="range-line"><input id="magnitude" type="range" min="0.6" max="1.6" step="0.1" value="1"><span class="range-read" id="magnitudeValue">1.0×</span></div></div>
+        <div class="control"><label for="speed">Playback speed</label><div class="range-line"><input id="speed" type="range" min="1" max="8" value="2"><span class="range-read" id="speedValue">2×</span></div></div>
+        <div class="buttons"><button id="restart" aria-label="Restart replay">↺</button><button id="focusDrift">Jump to drift</button><button class="primary" id="play">Pause</button></div>
+      </div>
+      <div class="outcomes"><div class="outcome"><div class="outcome-name">Synthetic replay result</div><div class="outcome-metrics"><div><span>P99 window coverage</span><strong id="finalCoverage">—</strong></div><div><span>Mean budget waste</span><strong id="finalWaste">—</strong></div></div></div><div class="summary"><strong id="summaryHeadline">Running replay…</strong><span id="summaryDetail">Coverage and waste are computed over evaluated windows.</span></div></div>
+      <div class="phases"><div class="phase active" data-phase="warmup"><strong>WARM-UP</strong></div><div class="phase" data-phase="stable"><strong>STEADY</strong></div><div class="phase" data-phase="unseen"><strong>UNOBSERVED SHIFT</strong></div><div class="phase" data-phase="protect"><strong>PROTECTION</strong></div><div class="phase" data-phase="recovered"><strong>RECOVERED</strong></div></div>
+      <div class="replay-body">
+        <div class="chart-side">
+          <div class="chart-head"><div class="chart-title">Window-level P99 and committed budget</div><div class="legend"><span><i class="dot" style="background:var(--cyan)"></i>Realized P99</span><span><i class="dot" style="background:var(--red)"></i>DeCal budget</span><span><i class="area-key"></i>Unused budget</span></div></div>
+          <canvas id="timeline"></canvas><input id="scrubber" type="range" min="0" max="63" value="0" aria-label="Replay window"><div class="event" id="eventText">Running the controller…</div>
+        </div>
+        <aside class="inspect">
+          <div class="window-badge" id="windowBadge">WINDOW —</div><div class="inspect-title" id="inspectTitle">Loading replay</div><div class="explanation" id="pointExplanation">Move the scrubber to inspect a window.</div>
+          <div class="triple"><div class="metric"><span>REALIZED P99</span><strong id="actualValue">—</strong></div><div class="metric"><span>BASE BUDGET</span><strong id="baseValue">—</strong></div><div class="metric"><span>SAFETY FACTOR γ</span><strong id="sfValue">—</strong></div></div>
+          <div class="verdict"><strong>DeCal</strong><span class="verdict-budget" id="budgetValue">—</span><span class="verdict-gap" id="budgetGap">—</span><span class="badge" id="verdictBadge">—</span></div>
+          <div class="calibration"><div class="calibration-title">DeCal calibration state</div><div class="score-row"><span>Base residual</span><div class="score-track"><div class="score-fill" id="scoreBar" style="background:var(--red)"></div></div><span class="score-num" id="scoreValue">—</span></div><div class="score-row"><span>Next correction</span><div class="score-track"><div class="score-fill" id="correctionBar" style="background:var(--amber)"></div></div><span class="score-num" id="correctionValue">—</span></div></div>
+          <div class="cumulative"><div class="cum"><span>Cumulative coverage</span><strong id="coverageValue">—</strong></div><div class="cum"><span>Cumulative waste</span><strong id="wasteValue">—</strong></div></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <!-- EMBEDDED_REPLAY_DATA -->
+  <script>
+    const $=id=>document.getElementById(id);
+    const colors={grid:'#e0e2e3',muted:'#777e83',actual:'#347f89',decal:'#c9344d',red:'#c9344d',amber:'#a66b18'};
+    const replay={data:null,cursor:0,playing:true,timer:null};
+    function fitCanvas(canvas){const dpr=window.devicePixelRatio||1,rect=canvas.getBoundingClientRect();canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(rect.height*dpr);const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return{ctx,width:rect.width,height:rect.height}}
+    function drawTimeline(){
+      if(!replay.data)return;
+      const{ctx,width,height}=fitCanvas($('timeline')),rows=replay.data.windows,visible=rows.slice(0,replay.cursor+1),pad={left:48,right:16,top:25,bottom:28},w=width-pad.left-pad.right,h=height-pad.top-pad.bottom;
+      const maxY=Math.ceil(Math.max(...rows.flatMap(r=>[r.actual,r.budget]))/100)*100||100,x=i=>pad.left+i/(rows.length-1)*w,y=v=>pad.top+h-v/maxY*h;
+      ctx.clearRect(0,0,width,height);ctx.font='10px Inter,system-ui';ctx.textAlign='right';
+      for(let i=0;i<=4;i++){const v=maxY*i/4,py=y(v);ctx.strokeStyle=colors.grid;ctx.beginPath();ctx.moveTo(pad.left,py);ctx.lineTo(width-pad.right,py);ctx.stroke();ctx.fillStyle=colors.muted;ctx.fillText(Math.round(v),pad.left-8,py+3)}
+      visible.forEach((r,i)=>{const band=w/(rows.length-1);if(r.budget>r.actual){ctx.fillStyle='rgba(212,63,87,.10)';ctx.fillRect(x(i)-band/2,y(r.budget),band,Math.max(y(r.actual)-y(r.budget),1))}});
+      const zones=[];visible.forEach((r,i)=>{if(!r.drift)return;const z=zones[zones.length-1];if(z&&i<=z.end+2)z.end=i;else zones.push({start:i,end:i})});
+      zones.forEach(z=>{const band=w/(rows.length-1),left=x(z.start)-band/2,right=x(z.end)+band/2,center=(left+right)/2;ctx.fillStyle='rgba(166,107,24,.07)';ctx.fillRect(left,pad.top,right-left,h);ctx.save();ctx.strokeStyle=colors.amber;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(left,pad.top);ctx.lineTo(left,pad.top+h);if(z.end>z.start){ctx.moveTo(right,pad.top);ctx.lineTo(right,pad.top+h)}ctx.stroke();ctx.restore();ctx.fillStyle=colors.amber;ctx.textAlign='center';ctx.fillText(z.end>z.start?'DRIFT INTERVAL':'DRIFT',center,14)});
+      function line(field,color,lw){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.lineJoin='round';ctx.beginPath();visible.forEach((r,i)=>i?ctx.lineTo(x(i),y(r[field])):ctx.moveTo(x(i),y(r[field])));ctx.stroke();ctx.restore()}
+      line('budget',colors.decal,2.7);line('actual',colors.actual,2.3);
+      visible.forEach((r,i)=>{if(!r.oom)return;const px=x(i),top=y(r.actual),bottom=y(r.budget);ctx.save();ctx.strokeStyle=colors.red;ctx.setLineDash([2,2]);ctx.beginPath();ctx.moveTo(px,bottom);ctx.lineTo(px,top);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=colors.red;ctx.beginPath();ctx.moveTo(px,top+2);ctx.lineTo(px-5,top-6);ctx.lineTo(px+5,top-6);ctx.closePath();ctx.fill();ctx.restore()});
+      const cur=visible[visible.length-1];[['actual',colors.actual],['budget',colors.decal]].forEach(([f,c])=>{ctx.beginPath();ctx.arc(x(replay.cursor),y(cur[f]),4,0,Math.PI*2);ctx.fillStyle=c;ctx.fill()});ctx.fillStyle=colors.muted;ctx.textAlign='center';[0,16,32,48,63].forEach(i=>ctx.fillText(i,x(i),height-8));
+    }
+    function setBar(id,value,max){$(id).style.width=`${Math.min(Math.abs(value)/Math.max(max,1)*100,100)}%`}
+    function render(){
+      if(!replay.data)return;
+      const row=replay.data.windows[replay.cursor],seen=replay.data.windows.slice(1,replay.cursor+1),scoreMax=Math.max(Math.abs(row.score),1),correctionMax=Math.max(row.nextCorrection,1);
+      $('windowBadge').textContent=`WINDOW ${row.t} · ${replay.cursor+1}/${replay.data.windows.length}`;
+      $('inspectTitle').textContent=row.oom?'Budget below realized P99':row.drift?'Drift detected':'Budget covers realized P99';
+      $('actualValue').textContent=row.actual.toFixed(0);$('baseValue').textContent=row.base.toFixed(0);$('sfValue').textContent=`${row.safetyFactor.toFixed(2)}×`;$('budgetValue').textContent=`${row.budget.toFixed(0)} tokens`;
+      const gap=row.budget-row.actual;$('budgetGap').textContent=gap>=0?`headroom +${gap.toFixed(0)} · waste ${row.waste.toFixed(1)}%`:`shortfall ${Math.abs(gap).toFixed(0)} tokens`;
+      const badge=$('verdictBadge');badge.textContent=row.oom?'MISS':'COVERED';badge.className=`badge ${row.oom?'miss':'covered'}`;
+      $('scoreValue').textContent=row.score.toFixed(0);setBar('scoreBar',row.score,scoreMax);$('correctionValue').textContent=row.nextCorrection.toFixed(0);setBar('correctionBar',row.nextCorrection,correctionMax);
+      const coverage=seen.length?100*seen.filter(r=>!r.oom).length/seen.length:0,waste=seen.length?seen.reduce((s,r)=>s+r.waste,0)/seen.length:0;$('coverageValue').textContent=`${coverage.toFixed(1)}%`;$('wasteValue').textContent=`${waste.toFixed(1)}%`;
+      const summary=replay.data.summary,evaluated=replay.data.windows.slice(1),misses=evaluated.filter(r=>r.oom).length;$('finalCoverage').textContent=`${summary.coverage.toFixed(1)}%`;$('finalWaste').textContent=`${summary.averageWaste.toFixed(1)}%`;$('summaryHeadline').textContent=`${misses} miss${misses===1?'':'es'} / ${evaluated.length} evaluated windows`;$('summaryDetail').textContent='Waste = mean max(budget − P99, 0) / budget.';
+      $('scrubber').value=String(replay.cursor);
+      let phase='stable',explanation='Nominal operation: the budget is computed from completed windows.';
+      if(row.t<6){phase='warmup';explanation='Calibration buffer initialization. Window 0 is excluded from aggregate metrics.'}
+      else if(row.oom&&row.t>=10){phase='unseen';explanation='The shift occurs after commitment; no causal controller can revise this budget.'}
+      else if(row.drift){phase='protect';explanation='The previous observation triggers temporary protection and calibration reset.'}
+      else if(row.safetyFactor>1.01||row.waste>=12){phase='protect';explanation=`Protection remains active; relative headroom is ${row.waste.toFixed(1)}%.`}
+      else if(row.t>40){phase='recovered';explanation='The temporary margin has retracted to the calibrated budget.'}
+      document.querySelectorAll('.phase').forEach(n=>n.classList.toggle('active',n.dataset.phase===phase));$('pointExplanation').textContent=explanation;
+      if(phase==='warmup')$('eventText').textContent='WARM-UP — initializing the calibration buffer.';else if(phase==='unseen'){$('inspectTitle').textContent='First affected window';$('eventText').textContent='UNOBSERVED SHIFT — P99 rises after the budget is committed.'}else if(row.drift){$('inspectTitle').textContent='First response window';$('eventText').textContent='PROTECTION — drift evidence is now available to the controller.'}else if(phase==='protect')$('eventText').textContent='HOLD / DECAY — the temporary margin contracts after the trigger.';else $('eventText').textContent='STEADY — budget computed from completed observations.';
+      drawTimeline();
+    }
+    function syncPlay(){const end=replay.data&&replay.cursor>=replay.data.windows.length-1;$('play').textContent=replay.playing?'Pause':end?'Replay':'Play'}
+    function schedule(){clearTimeout(replay.timer);if(!replay.playing||!replay.data)return;const delay=Math.max(75,680/Number($('speed').value));replay.timer=setTimeout(()=>{if(replay.cursor<replay.data.windows.length-1)replay.cursor++;else replay.playing=false;syncPlay();render();schedule()},delay)}
+    function embeddedReplay(){
+      if(!window.embeddedReplayData)return null;
+      const source=window.embeddedReplayData[$('scenario').value],fields=['t','actual','budget','base','safetyFactor','score','nextCorrection','drift','oom','waste'];
+      return{summary:source.summary,windows:source.windows.map(values=>Object.fromEntries(fields.map((field,index)=>[field,values[index]])))};
+    }
+    async function requestReplay(){
+      const embedded=embeddedReplay();if(embedded)return embedded;
+      const path=`/api/simulate?scenario=${encodeURIComponent($('scenario').value)}&magnitude=${$('magnitude').value}`;
+      const origins=location.protocol==='file:'?['http://127.0.0.1:8765','http://127.0.0.1:8080']:[''];
+      for(const origin of origins){try{const response=await fetch(`${origin}${path}`);if(response.ok)return response.json()}catch(error){/* Try the compatible local port. */}}
+      throw new Error(location.protocol==='file:'?'Start the demo server: python3 demo/server.py':'The local simulation service is unavailable.');
+    }
+    async function loadReplay(){clearTimeout(replay.timer);$('replayPanel').classList.add('loading');$('eventText').classList.remove('error');try{replay.data=await requestReplay();replay.cursor=0;replay.playing=true;$('scrubber').max=String(replay.data.windows.length-1);syncPlay();render();schedule()}catch(error){$('eventText').textContent=`Simulation unavailable. ${error.message}`;$('eventText').classList.add('error')}finally{$('replayPanel').classList.remove('loading')}}
+    if(window.embeddedReplayData){$('magnitude').disabled=true;$('magnitude').title='Run demo/server.py to vary drift magnitude';}
+    $('scenario').addEventListener('change',loadReplay);$('magnitude').addEventListener('input',()=>{$('magnitudeValue').textContent=`${Number($('magnitude').value).toFixed(1)}×`});$('magnitude').addEventListener('change',loadReplay);$('speed').addEventListener('input',()=>{$('speedValue').textContent=`${$('speed').value}×`;schedule()});$('restart').addEventListener('click',()=>{replay.cursor=0;replay.playing=true;syncPlay();render();schedule()});$('focusDrift').addEventListener('click',()=>{if(!replay.data)return;replay.cursor=Math.min(22,replay.data.windows.length-1);replay.playing=true;syncPlay();render();schedule()});$('scrubber').addEventListener('input',()=>{if(!replay.data)return;replay.cursor=Number($('scrubber').value);replay.playing=false;syncPlay();render();clearTimeout(replay.timer)});$('play').addEventListener('click',()=>{if(replay.data&&replay.cursor>=replay.data.windows.length-1)replay.cursor=0;replay.playing=!replay.playing;syncPlay();render();schedule()});window.addEventListener('resize',drawTimeline);loadReplay();
+  </script>
+</body>
+</html>
