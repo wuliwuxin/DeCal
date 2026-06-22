@@ -8,20 +8,7 @@ This repository contains the main experiment pipeline for evaluating DeCal on Se
 
 [![Animated DeCal causal replay](demo/preview.gif)](demo/standalone.html)
 
-**[Open the self-contained replay](demo/standalone.html)** — download or open
-this single HTML file locally; no server is required. It includes sudden shift,
-gradual drift, and recovery scenarios at the default drift magnitude.
 
-To vary drift magnitude with the live DeCal orchestrator, run:
-
-```bash
-python3 demo/server.py
-```
-
-Then open **[http://127.0.0.1:8765](http://127.0.0.1:8765)**. The demo uses the
-repository's DeCal orchestrator on deterministic synthetic workloads and reports
-window-level P99 coverage and budget waste. These values illustrate controller
-behavior; they are not the paper's benchmark results.
 
 ## Highlights
 
