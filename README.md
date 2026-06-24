@@ -4,7 +4,7 @@ DeCal is a drift-aware budget control framework for LLM serving workloads. It le
 
 This repository contains the main experiment pipeline for evaluating DeCal on ServeGen language traces and BurstGPT-style production traces. It is organized as a compact research artifact: core algorithms, data loaders, evaluators, main experiment runners, and reproducible dependency files.
 
-[![Animated DeCal causal replay](demo/preview.gif)](demo/standalone.html)
+![Animated DeCal causal replay](demo/preview.gif)
 
 ## Highlights
 
