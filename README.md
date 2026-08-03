@@ -11,6 +11,8 @@ DeCal is a drift-aware budget control framework for LLM serving workloads. It le
 - Cross-client transfer for cold-start and recovery scenarios.
 
 
+![Main Resultrs](figure/rq1_main_radar.png)
+
 ## Repository Layout
 
 ```text
@@ -129,9 +131,5 @@ If a full run is slow, start with a single small workload:
 ```bash
 python3 run_all.py --dataset servegen --models m-small --no_export_csv
 ```
-
-## Contact
-- Xin Wu: `wu1351658806@163.com`
-- Fei Teng (Corresponding Author): `fteng@swjtu.edu.cn`
 
 ⭐ If you find DeCal helpful, please consider giving us a star!
