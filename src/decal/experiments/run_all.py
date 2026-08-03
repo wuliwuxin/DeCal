@@ -1,38 +1,4 @@
 #!/usr/bin/env python3
-"""
-DeCal: Run All Experiments.
-
-Each dataset is evaluated completely independently — no shared data,
-no cross-dataset calibration.  The two evaluation chains are:
-
-  Chain A — ServeGen (Alibaba Cloud production traces):
-      Default  : language/m-small, m-mid, m-large
-      Optional : reason/deepseek-r1, multimodal/mm-image via --categories
-      Suite    : DeCal method evaluation
-      Output   : results/servegen/<model>/*.json
-
-  Chain B — BurstGPT (real ChatGPT/GPT-4 production traffic):
-      Datasets : BurstGPT  (4 client streams, 231 days, 1-hour windows, ~10.6M reqs)
-      Suite    : DeCal method evaluation
-      Output   : results/burstgpt/*.json
-
-Main suite:
-  - DeCal method evaluation on the selected workload traces
-
-Usage:
-    # Both datasets independently (default)
-    python -m decal.experiments.run_all
-
-    # ServeGen only
-    python -m decal.experiments.run_all --dataset servegen
-
-    # BurstGPT only
-    python -m decal.experiments.run_all --dataset burstgpt
-
-    # Specific ServeGen model(s)
-    python -m decal.experiments.run_all --dataset servegen --models m-large m-small
-
-"""
 
 import argparse
 import json

@@ -2,8 +2,6 @@
 
 DeCal is a drift-aware budget control framework for LLM serving workloads. It learns per-client, per-window tail budgets from historical request distributions, detects workload drift online, and adapts capacity with decoupled empirical calibration.
 
-This repository contains the main experiment pipeline for evaluating DeCal on ServeGen language traces and BurstGPT-style production traces. It is organized as a compact research artifact: core algorithms, data loaders, evaluators, main experiment runners, and reproducible dependency files.
-
 ![Animated DeCal causal replay](demo/preview.gif)
 
 ## Highlights
@@ -93,44 +91,6 @@ The shell wrapper is equivalent:
 ./run.sh --dataset servegen --models m-mid
 ```
 
-## Main Experiment
-
-The default command evaluates the DeCal method on the selected main workload traces.
-It reports the core allocation metrics:
-
-- window-level P99 failure rate
-- per-request OOM probability
-- waste rate
-- P99 coverage
-- prediction error metrics
-- drift-trigger metrics produced by DeCal
-
-The runner executes only the DeCal main experiment.
-
-To compare against the aggregate ServeGen and BurstGPT numbers reported in the
-manuscript, run the default main suite rather than a single workload:
-
-```bash
-python3 run_all.py
-```
-
-For ServeGen, the manuscript-facing default is the language suite
-(`m-large`, `m-mid`, and `m-small`). Commands such as `--models m-mid`
-intentionally report only that workload, so their Throughput and SLO Goodput
-values should not be compared directly with the aggregate ServeGen row.
-
-The reported Throughput, P95/P99 Latency, Quality Proxy, and SLO Goodput columns
-use the paper's replay-derived display units. Raw replay indicators are kept in
-the JSON output with a `_raw` suffix for auditability.
-
-The auxiliary ServeGen categories remain available for inspection, but they are
-not part of the default main table:
-
-```bash
-python3 run_all.py --dataset servegen --categories reason multimodal
-```
-
-
 ## Command Reference
 
 ```bash
@@ -169,3 +129,9 @@ If a full run is slow, start with a single small workload:
 ```bash
 python3 run_all.py --dataset servegen --models m-small --no_export_csv
 ```
+
+## Contact
+- Xin Wu: `wu1351658806@163.com`
+- Fei Teng (Corresponding Author): `fteng@swjtu.edu.cn`
+
+⭐ If you find DeCal helpful, please consider giving us a star!
