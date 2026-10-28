@@ -91,9 +91,9 @@ class PageHinkleyDetector(BaseDriftDetector):
         # --- Step 2: Page-Hinkley statistics ---
         # Normalize by sigma for scale-invariance
         sigma = max(state["sigma_hat"], 1e-6)
-        x_norm = (value - state["mu_hat"]) / sigma
-
-        state["m"] = state["m"] + (x_norm - self.delta)
+        x_norm = (state["mu_hat"] - value) / sigma
+        
+        state["m"] = state["m"] + x_norm + self.delta
         state["M"] = max(state["M"], state["m"])
         ph = state["M"] - state["m"]
 
